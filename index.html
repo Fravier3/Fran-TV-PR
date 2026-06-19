@@ -155,30 +155,6 @@
       pointer-events: none;
     }
 
-    .now-playing {
-      padding: 13px 14px 15px;
-      border-top: 1px solid var(--border);
-    }
-
-    .now-playing strong {
-      display: block;
-      font-size: 1rem;
-      margin-bottom: 4px;
-    }
-
-    .now-playing span {
-      color: var(--muted);
-      font-size: .85rem;
-      overflow-wrap: anywhere;
-    }
-
-    .mini-actions {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      padding: 0 14px 14px;
-    }
-
     .filters {
       padding: 12px;
       display: grid;
@@ -288,7 +264,7 @@
       }
 
       .channels {
-        max-height: calc(100vh - 145px);
+        max-height: calc(100vh - 95px);
       }
     }
 
@@ -298,10 +274,6 @@
       }
 
       .filter-row {
-        grid-template-columns: 1fr;
-      }
-
-      .mini-actions {
         grid-template-columns: 1fr;
       }
 
@@ -342,15 +314,7 @@
         <div id="playerEmpty" class="player-empty">Selecciona un canal para reproducirlo</div>
       </div>
 
-      <div class="now-playing">
-        <strong id="nowTitle">Nada reproduciendo</strong>
-        <span id="nowUrl">Carga la lista y toca un canal.</span>
-      </div>
 
-      <div class="mini-actions">
-        <button class="secondary" id="copyBtn">Copiar enlace</button>
-        <button class="secondary" id="openBtn">Abrir stream</button>
-      </div>
     </section>
 
     <section class="list-card">
@@ -368,10 +332,10 @@
     const errorBox = document.getElementById("errorBox");
     const video = document.getElementById("video");
     const playerEmpty = document.getElementById("playerEmpty");
-    const nowTitle = document.getElementById("nowTitle");
-    const nowUrl = document.getElementById("nowUrl");
-    const copyBtn = document.getElementById("copyBtn");
-    const openBtn = document.getElementById("openBtn");
+    const nowTitle = { textContent: "" };
+    const nowUrl = { textContent: "" };
+    const copyBtn = null;
+    const openBtn = null;
 
     let channels = [];
     let filteredChannels = [];
@@ -589,28 +553,6 @@
         });
       }
     }
-
-    copyBtn.addEventListener("click", async () => {
-      if (!currentStream) {
-        showError("Primero selecciona un canal.");
-        return;
-      }
-
-      try {
-        await navigator.clipboard.writeText(currentStream);
-        setStatus("Enlace copiado.");
-      } catch {
-        showError("No pude copiar el enlace automáticamente.");
-      }
-    });
-
-    openBtn.addEventListener("click", () => {
-      if (!currentStream) {
-        showError("Primero selecciona un canal.");
-        return;
-      }
-      window.open(currentStream, "_blank");
-    });
 
     loadBtn.addEventListener("click", loadFromUrl);
     fileInput.addEventListener("change", e => loadFromFile(e.target.files[0]));
