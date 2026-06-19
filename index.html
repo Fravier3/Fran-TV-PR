@@ -201,8 +201,8 @@
     .channels {
       display: grid;
       gap: 8px;
-      padding: 12px;
-      max-height: 58vh;
+      padding: 10px 12px 12px;
+      max-height: 72vh;
       overflow: auto;
       -webkit-overflow-scrolling: touch;
     }
@@ -263,6 +263,10 @@
       display: none;
     }
 
+    .slim-error {
+      margin: 10px 12px 0;
+    }
+
     .file-line {
       display: grid;
       grid-template-columns: 1fr;
@@ -284,7 +288,7 @@
       }
 
       .channels {
-        max-height: calc(100vh - 230px);
+        max-height: calc(100vh - 145px);
       }
     }
 
@@ -350,20 +354,7 @@
     </section>
 
     <section class="list-card">
-      <div class="filters">
-        <input id="searchInput" placeholder="Buscar canal..." />
-
-        <div class="filter-row">
-          <select id="groupSelect">
-            <option value="">Todos los grupos</option>
-          </select>
-          <button class="secondary" id="clearBtn">Limpiar</button>
-        </div>
-
-        <div id="status" class="status">Listo para cargar.</div>
-        <div id="errorBox" class="error"></div>
-      </div>
-
+      <div id="errorBox" class="error slim-error"></div>
       <div id="channels" class="channels"></div>
     </section>
   </main>
@@ -372,11 +363,8 @@
     const playlistUrl = document.getElementById("playlistUrl");
     const loadBtn = document.getElementById("loadBtn");
     const fileInput = document.getElementById("fileInput");
-    const searchInput = document.getElementById("searchInput");
-    const groupSelect = document.getElementById("groupSelect");
-    const clearBtn = document.getElementById("clearBtn");
     const channelsEl = document.getElementById("channels");
-    const statusEl = document.getElementById("status");
+    const statusEl = { textContent: "" };
     const errorBox = document.getElementById("errorBox");
     const video = document.getElementById("video");
     const playerEmpty = document.getElementById("playerEmpty");
@@ -491,41 +479,9 @@
     }
 
     function afterLoad() {
-      buildGroups();
-      applyFilters();
-      setStatus(channels.length + " canales cargados.");
-    }
-
-    function buildGroups() {
-      const groups = [...new Set(channels.map(c => c.group || "Sin grupo"))].sort((a, b) => a.localeCompare(b));
-
-      groupSelect.innerHTML = '<option value="">Todos los grupos</option>';
-
-      for (const group of groups) {
-        const option = document.createElement("option");
-        option.value = group;
-        option.textContent = group;
-        groupSelect.appendChild(option);
-      }
-    }
-
-    function applyFilters() {
-      const q = searchInput.value.trim().toLowerCase();
-      const group = groupSelect.value;
-
-      filteredChannels = channels.filter(c => {
-        const matchText =
-          c.name.toLowerCase().includes(q) ||
-          c.group.toLowerCase().includes(q) ||
-          c.url.toLowerCase().includes(q);
-
-        const matchGroup = !group || c.group === group;
-
-        return matchText && matchGroup;
-      });
-
+      filteredChannels = channels;
       renderChannels();
-      setStatus(filteredChannels.length + " de " + channels.length + " canales visibles.");
+      setStatus(channels.length + " canales cargados.");
     }
 
     function renderChannels() {
@@ -658,14 +614,6 @@
 
     loadBtn.addEventListener("click", loadFromUrl);
     fileInput.addEventListener("change", e => loadFromFile(e.target.files[0]));
-    searchInput.addEventListener("input", applyFilters);
-    groupSelect.addEventListener("change", applyFilters);
-
-    clearBtn.addEventListener("click", () => {
-      searchInput.value = "";
-      groupSelect.value = "";
-      applyFilters();
-    });
 
     loadFromUrl();
   </script>
