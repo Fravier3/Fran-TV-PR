@@ -44,11 +44,11 @@
   </style>
 </head>
 <body>
-  <header><div class="top-title"><h1>Fran's Visor IPTV</h1><button id="refreshBtn" class="refresh-btn">Actualizar</button></div></header>
-  <main>
-    <section class="player-card"><div class="player-wrap"><video id="video" controls playsinline webkit-playsinline></video><div id="playerEmpty" class="player-empty">Selecciona un canal para reproducirlo</div></div></section>
-    <section class="list-card"><div id="status" class="status">Cargando canales...</div><div id="errorBox" class="error"></div><div id="channels" class="channels"></div></section>
-  </main>
+<header><div class="top-title"><h1>Fran's Visor IPTV</h1><button id="refreshBtn" class="refresh-btn">Actualizar</button></div></header>
+<main>
+<section class="player-card"><div class="player-wrap"><video id="video" controls playsinline webkit-playsinline></video><div id="playerEmpty" class="player-empty">Selecciona un canal para reproducirlo</div></div></section>
+<section class="list-card"><div id="status" class="status">Cargando canales...</div><div id="errorBox" class="error"></div><div id="channels" class="channels"></div></section>
+</main>
 
 <script>
 const PROXY_BASE="https://withered-leaf-0a9f.fjvs1993.workers.dev";
@@ -69,8 +69,8 @@ const PUERTO_RICO_MANUAL=[
 ];
 
 const COLOMBIA_MANUAL=[
-  {country:"Colombia",displayName:"Caracol HD",name:"Caracol HD",tvgId:"Caracol.HD.co",logo:"https://static.wikia.nocookie.net/logopedia/images/9/91/Caracol_2019.png/revision/latest?cb=20200209131121&path-prefix=es",group:"ENTRETENIMIENTO",url:"http://181.78.8.199:8000/play/a0b0/index.m3u8"},
-  {country:"Colombia",displayName:"RCN HD",name:"RCN HD",tvgId:"RCN.HD.co",logo:"https://static.wikia.nocookie.net/logopedia/images/4/43/Canal_RCN_2023-present.svg/revision/latest/scale-to-width-down/67?cb=20230702001117",group:"ENTRETENIMIENTO",url:"http://181.78.8.199:8000/play/a09l/index.m3u8"}
+  {country:"Colombia",displayName:"Caracol HD",name:"Caracol HD",tvgId:"Caracol.HD.co",logo:"",group:"ENTRETENIMIENTO",url:"http://181.78.8.199:8000/play/a0b0/index.m3u8"},
+  {country:"Colombia",displayName:"RCN HD",name:"RCN HD",tvgId:"RCN.HD.co",logo:"",group:"ENTRETENIMIENTO",url:"http://181.78.8.199:8000/play/a09l/index.m3u8"}
 ];
 
 const USA_MANUAL=[
@@ -90,6 +90,7 @@ const MEXICO_MANUAL=[
 
 const refreshBtn=document.getElementById("refreshBtn"),channelsEl=document.getElementById("channels"),statusEl=document.getElementById("status"),errorBox=document.getElementById("errorBox"),video=document.getElementById("video"),playerEmpty=document.getElementById("playerEmpty");
 let channels=[],hls=null;
+
 function showError(message){errorBox.textContent=message;errorBox.style.display=message?"block":"none"}
 function setStatus(message){statusEl.textContent=message}
 function getAttr(line,attr){const regex=new RegExp(attr+'="([^"]*)"',"i");const match=line.match(regex);return match?match[1]:""}
@@ -98,27 +99,15 @@ function shortUrl(url){try{return new URL(url).hostname}catch{return url}}
 function channelInitials(name){
   const clean=String(name||"TV").replace(/[^a-zA-Z0-9ÁÉÍÓÚÜÑáéíóúüñ ]/g," ").trim();
   const words=clean.split(/\s+/).filter(Boolean);
-  if(!words.length) return "TV";
-  if(words.length===1) return words[0].substring(0,3).toUpperCase();
+  if(!words.length)return"TV";
+  if(words.length===1)return words[0].substring(0,3).toUpperCase();
   return words.slice(0,2).map(w=>w[0]).join("").toUpperCase();
 }
-function isHttpBlockedOnHttps(url){
-  return location.protocol==="https:" && String(url||"").startsWith("http://");
-}
-function hasProxy(){
-  return PROXY_BASE && !PROXY_BASE.includes("PEGA_AQUI");
-}
-function getPlayableUrl(url){
-  if(isHttpBlockedOnHttps(url) && hasProxy()){
-    return PROXY_BASE.replace(/\/$/,"") + "?url=" + encodeURIComponent(url);
-  }
-  return url;
-}
-function channelProxyStatus(url){
-  if(isHttpBlockedOnHttps(url) && hasProxy()) return " · vía proxy";
-  if(isHttpBlockedOnHttps(url)) return " · HTTP puede bloquearse";
-  return "";
-}
+function needsProxy(url){return location.protocol==="https:"&&String(url||"").startsWith("http://")}
+function getProxyUrl(url){return PROXY_BASE.replace(/\/$/,"")+"?url="+encodeURIComponent(url)}
+function getPlayableUrl(url){return needsProxy(url)?getProxyUrl(url):url}
+function channelProxyStatus(url){return needsProxy(url)?" · vía proxy":""}
+
 function parseM3U(text,country){
   const lines=text.split(/\r?\n/).map(l=>l.trim()).filter(Boolean),result=[];
   for(let i=0;i<lines.length;i++){
@@ -129,20 +118,20 @@ function parseM3U(text,country){
       const tvgId=getAttr(line,"tvg-id"),logo=getAttr(line,"tvg-logo"),group=getAttr(line,"group-title")||country;
       let url="";
       for(let j=i+1;j<lines.length;j++){if(!lines[j].startsWith("#")){url=lines[j];i=j;break}}
-      if(url) result.push({name,tvgId,logo,group,url,country,raw:line});
+      if(url)result.push({name,tvgId,logo,group,url,country,raw:line});
     }
   }
   return result;
 }
 function channelMatches(channel,rule){
   const haystack=normalizeText(channel.name+" "+channel.tvgId+" "+channel.url+" "+channel.raw+" "+channel.group);
-  return (rule.terms||[]).some(term=>haystack.includes(normalizeText(term)));
+  return(rule.terms||[]).some(term=>haystack.includes(normalizeText(term)));
 }
 function selectWanted(listChannels,playlist){
   const selected=[];
   for(const rule of playlist.wanted){
     const match=listChannels.find(channel=>!selected.some(existing=>existing.url===channel.url)&&channelMatches(channel,rule));
-    if(match) selected.push({...match,displayName:rule.label,country:playlist.country});
+    if(match)selected.push({...match,displayName:rule.label,country:playlist.country});
   }
   return selected;
 }
@@ -169,52 +158,49 @@ function renderChannels(){
       const label=document.createElement("div");label.className="country-label";label.textContent=channel.country;fragment.appendChild(label);lastCountry=channel.country;
     }
     const item=document.createElement("div");item.className="channel";
-    const logo=document.createElement("div");logo.className="logo";
-    logo.textContent=channelInitials(channel.displayName||channel.name);
+    const logo=document.createElement("div");logo.className="logo";logo.textContent=channelInitials(channel.displayName||channel.name);
     if(channel.logo){
-      const img=document.createElement("img");
-      img.src=channel.logo;
-      img.alt=channel.displayName;
-      img.loading="lazy";
-      img.onload=()=>{logo.textContent="";};
-      img.onerror=()=>{img.remove();logo.textContent=channelInitials(channel.displayName||channel.name);};
+      const img=document.createElement("img");img.src=channel.logo;img.alt=channel.displayName;img.loading="lazy";
+      img.onload=()=>{logo.textContent=""};
+      img.onerror=()=>{img.remove();logo.textContent=channelInitials(channel.displayName||channel.name)};
       logo.appendChild(img);
     }
     const info=document.createElement("div");
     const name=document.createElement("div");name.className="channel-name";name.textContent=channel.displayName;
-    const meta=document.createElement("div");
-    meta.className="channel-meta";
-    meta.textContent=channel.country+" · "+shortUrl(channel.url)+channelProxyStatus(channel.url);
+    const meta=document.createElement("div");meta.className="channel-meta";meta.textContent=channel.country+" · "+shortUrl(channel.url)+channelProxyStatus(channel.url);
     info.appendChild(name);info.appendChild(meta);item.appendChild(logo);item.appendChild(info);item.addEventListener("click",()=>playChannel(channel));fragment.appendChild(item);
   });
   channelsEl.appendChild(fragment);
 }
 function playChannel(channel){
   playerEmpty.style.display="none";
-  const playableUrl=getPlayableUrl(channel.url);
-
-  if(isHttpBlockedOnHttps(channel.url) && !hasProxy()){
-    showError("Este canal usa HTTP y GitHub Pages abre en HTTPS. Falta configurar el proxy para que reproduzca.");
-  }else if(isHttpBlockedOnHttps(channel.url) && hasProxy()){
-    showError("Intentando reproducir este canal por proxy HTTPS.");
-  }else{
-    showError("");
-  }
-
+  showError("");
   if(hls){hls.destroy();hls=null}
   video.pause();video.removeAttribute("src");video.load();
 
+  const originalUrl=channel.url;
+  const playableUrl=getPlayableUrl(originalUrl);
   const isHls=playableUrl.includes(".m3u8")||playableUrl.includes("m3u8")||playableUrl.includes("?url=");
+
+  if(needsProxy(originalUrl)){
+    setStatus("Reproduciendo por proxy: "+channel.displayName);
+  }else{
+    setStatus("Reproduciendo directo: "+channel.displayName);
+  }
+
   if(video.canPlayType("application/vnd.apple.mpegurl")){
     video.src=playableUrl;
-    video.play().catch(()=>{});
-  }
-  else if(isHls&&window.Hls&&Hls.isSupported()){
+    video.play().catch(()=>showError("No pudo iniciar el video. Prueba tocar Play manualmente."));
+  }else if(isHls&&window.Hls&&Hls.isSupported()){
     hls=new Hls({enableWorker:true,lowLatencyMode:true});
     hls.loadSource(playableUrl);
     hls.attachMedia(video);
-    hls.on(Hls.Events.MANIFEST_PARSED,()=>video.play().catch(()=>{}));
-    hls.on(Hls.Events.ERROR,(_,data)=>{if(data&&data.fatal) showError("Ese canal no pudo reproducirse ahora. Prueba otro canal.")});
+    hls.on(Hls.Events.MANIFEST_PARSED,()=>video.play().catch(()=>showError("No pudo iniciar automático. Toca Play.")));
+    hls.on(Hls.Events.ERROR,(_,data)=>{
+      if(data&&data.fatal){
+        showError(needsProxy(originalUrl)?"Ese canal no pudo reproducirse ni por proxy. Puede que el servidor bloquee proxies o el stream esté caído.":"Ese canal no pudo reproducirse ahora. Prueba otro canal.");
+      }
+    });
   }else{
     video.src=playableUrl;
     video.play().catch(()=>showError("Tu navegador no pudo reproducir este formato."));
