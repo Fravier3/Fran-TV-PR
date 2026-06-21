@@ -259,10 +259,21 @@
       text-align:center;
     }
 
+    .logo span {
+      position:absolute;
+      pointer-events:none;
+    }
+
+    .logo {
+      position:relative;
+    }
+
     .logo img {
       max-width:92%;
       max-height:92%;
       object-fit:contain;
+      position:relative;
+      z-index:1;
     }
 
     .channel-name { font-weight:850; line-height:1.15; margin-bottom:4px; }
@@ -7573,17 +7584,23 @@ function renderChannels(channels) {
 
     const logo = document.createElement("div");
     logo.className = "logo";
-    logo.textContent = channelInitials(channel.displayName || channel.name);
+
+    const initials = document.createElement("span");
+    initials.textContent = channelInitials(channel.displayName || channel.name);
+    logo.appendChild(initials);
 
     if (channel.logo) {
       const img = document.createElement("img");
       img.src = channel.logo;
       img.alt = channel.displayName || channel.name;
       img.loading = "lazy";
-      img.onload = () => { logo.textContent = ""; };
+      img.referrerPolicy = "no-referrer";
+      img.onload = () => {
+        initials.style.display = "none";
+      };
       img.onerror = () => {
         img.remove();
-        logo.textContent = channelInitials(channel.displayName || channel.name);
+        initials.style.display = "";
       };
       logo.appendChild(img);
     }
