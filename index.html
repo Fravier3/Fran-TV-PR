@@ -93,7 +93,7 @@
 
     .tabs {
       display:grid;
-      grid-template-columns:repeat(3,1fr);
+      grid-template-columns:repeat(4,1fr);
       gap:8px;
     }
 
@@ -312,6 +312,7 @@
       <button class="tab active" data-tab="Fran">Fran</button>
       <button class="tab" data-tab="Internacional">Internacional</button>
       <button class="tab" data-tab="Variado">Variado</button>
+      <button class="tab" data-tab="USA">USA</button>
     </div>
 
     <div id="addPanel" class="hidden-panel">
@@ -7454,6 +7455,12 @@ const DATA_IDS = {
   "Variado": "m3u-variado"
 };
 
+const EXTERNAL_SOURCES = {
+  "USA": "https://iptv-org.github.io/iptv/countries/us.m3u"
+};
+
+
+
 const video = document.getElementById("video");
 const playerEmpty = document.getElementById("playerEmpty");
 const channelsEl = document.getElementById("channels");
@@ -7545,7 +7552,7 @@ function channelInitials(name) {
   return words.slice(0, 2).map(w => w[0]).join("").toUpperCase();
 }
 
-function loadTab(tabName) {
+async function loadTab(tabName) {
   activeTab = tabName;
   channelsEl.innerHTML = "";
   renderedChannelNodes = [];
@@ -7553,12 +7560,28 @@ function loadTab(tabName) {
   searchIndex = -1;
   statusEl.textContent = "Cargando " + tabName + "...";
 
-  if (!cache[tabName]) {
-    const dataEl = document.getElementById(DATA_IDS[tabName]);
-    const text = dataEl ? dataEl.textContent : "#EXTM3U";
-    cache[tabName] = parseM3U(text, tabName);
+  if (cache[tabName]) {
+    renderChannels(cache[tabName]);
+    return;
   }
 
+  if (EXTERNAL_SOURCES[tabName]) {
+    try {
+      const response = await fetch(EXTERNAL_SOURCES[tabName], { cache:"no-store" });
+      if (!response.ok) throw new Error("No se pudo cargar la lista externa.");
+      const text = await response.text();
+      cache[tabName] = parseM3U(text, tabName);
+      renderChannels(cache[tabName]);
+    } catch (error) {
+      statusEl.textContent = "No se pudo cargar USA desde GitHub.";
+      channelsEl.innerHTML = '<div class="status">La lista externa no respondió o fue bloqueada por el navegador.</div>';
+    }
+    return;
+  }
+
+  const dataEl = document.getElementById(DATA_IDS[tabName]);
+  const text = dataEl ? dataEl.textContent : "#EXTM3U";
+  cache[tabName] = parseM3U(text, tabName);
   renderChannels(cache[tabName]);
 }
 
