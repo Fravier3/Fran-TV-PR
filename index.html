@@ -203,9 +203,6 @@
       font-size:.82rem;
       white-space:nowrap;
     }
-    .next-btn {
-  display: none !important;
-}
 
     .search-input {
       display:none;
@@ -344,7 +341,12 @@
     </section>
   </main>
 
-  <script type="text/plain" id="m3u-fran">#EXTM3U
+  <script type="text/plain" id="m3u-fran">#EXTINF:-1 tvg-name="Caracol" tvg-logo="" tvg-id="fran.proxy.caracol" group-title="Fran",Caracol
+http://181.78.8.199:8000/play/a0b0/index.m3u8
+#EXTINF:-1 tvg-name="RCN" tvg-logo="" tvg-id="fran.proxy.rcn" group-title="Fran",RCN
+http://live.btv.mx:2424/stream/299267/smAVz_uhytj5REM-4pYNZbkrcB2
+
+#EXTM3U
 
 #EXTINF:-1 tvg-id="WKAQTV21.pr@HD" tvg-logo="https://i.imgur.com/DVASpQj.png" group-title="Puerto Rico",Telemundo PR (1080p)
 https://nbculocallive.akamaized.net/hls/live/2037499/puertorico/stream1/master.m3u8
@@ -7448,6 +7450,14 @@ https://a-cdn.klowdtv.com/live3/clubbingtv_720p/playlist.m3u8
 http://181.78.121.15:8000/play/a00a/index.m3u8</script>
 
 <script>
+const FRAN_HTTP_PROXY_BASE = "https://withered-leaf-0a9f.fjvs1993.workers.dev/";
+
+function useProxyOnlyForHttp(url) {
+  if (typeof url !== "string") return url;
+  if (!url.startsWith("http://")) return url;
+  return FRAN_HTTP_PROXY_BASE + "?url=" + encodeURIComponent(url);
+}
+
 const DATA_IDS = {
   "Fran": "m3u-fran",
   "Internacional": "m3u-internacional",
@@ -7645,8 +7655,9 @@ function playChannel(channel) {
   video.removeAttribute("src");
   video.load();
 
-  const url = channel.url;
-  const isHls = url.includes(".m3u8") || url.includes("m3u8");
+  const originalUrl = channel.url;
+  const url = useProxyOnlyForHttp(originalUrl);
+  const isHls = url.includes(".m3u8") || url.includes("m3u8") || originalUrl.includes(".m3u8") || originalUrl.includes("m3u8");
 
   if (video.canPlayType("application/vnd.apple.mpegurl")) {
     video.src = url;
